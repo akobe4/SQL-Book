@@ -207,3 +207,99 @@ Results
 
 **Percent of Total Calculations**
 
+```SQL 
+SELECT sales_month
+	,kind_of_business
+	,sales * 100 / total_sales as pctg_total_sales
+FROM 
+(
+	SELECT a.sales_month, a.kind_of_business, a.sales
+		   ,SUM(b.sales) AS total_sales
+	FROM retail_sales a 
+	JOIN retail_sales b ON a.sales_month = b.sales_month
+	AND b.kind_of_business IN ('Mens''s clothing stores', 'Women''s clothing stores')
+	WHERE a.kind_of_business IN ('Men''s clothing stores', 'Women''s clothing stores')
+	GROUP BY 1,2,3
+) aa
+;
+```
+
+
+Results 
+
+![alt text](image-14.png)
+
+
+
+- you can also use the SUM window function and to partition by sales month 
+
+
+```SQL
+SELECT sales_month
+	,kind_of_business
+	,sales 
+	,SUM(sales) OVER (PARTITION BY sales_month) AS total_sales
+	,sales * 100 / SUM(sales) OVER (PARTITION BY sales_month) AS pctg_total
+FROM retail_sales 
+WHERE kind_of_business IN ('Men''s clothing stores', 'Women''s clothing stores')
+ORDER BY 1
+;
+```
+
+Results 
+
+
+![alt text](image-15.png)
+
+
+- percent sales within a longer time period, such as percent yearly sales each month represents 
+
+```SQL 
+SELECT sales_month 
+	,kind_of_business
+	,sales * 100/ yearly_sales AS pctg_yearly
+FROM 
+(
+	SELECT a.sales_month 
+		  ,a.kind_of_business 
+		  ,a.sales
+		  ,SUM(b.sales) AS yearly_sales
+	FROM retail_sales a 
+	JOIN retail_sales b ON date_part('year', a.sales_month) = date_part('year', b.sales_month)
+		AND a.kind_of_business = b.kind_of_business 
+		AND b.kind_of_business IN ('Men''s clothing stores', 'Women''s clothing stores')
+		WHERE a.kind_of_business IN ('Men''s clothing stores', 'Women''s clothing stores')
+		GROUP BY 1, 2, 3
+) aa
+;
+```
+
+Results 
+
+![alt text](image-17.png)
+
+
+
+
+- the window function method can be used 
+
+```SQL 
+SELECT sales_month
+	 ,kind_of_business 
+	 ,sales
+	 ,SUM(sales) OVER (PARTITION BY date_part('year', sales_month) ,kind_of_business) AS yearly_sales
+	 ,sales*100 / SUM(sales) OVER (PARTITION BY date_part('year', sales_month), kind_of_business) AS pctg_yearly
+FROM retail_sales
+WHERE kind_of_business IN ('Men''s clothing stores', 'Women''s clothing stores')
+ORDER BY 1
+;
+```
+
+
+Results 
+![alt text](image-18.png)
+
+
+
+
+**Percent Change over Time**
