@@ -303,3 +303,48 @@ Results
 
 
 **Percent Change over Time**
+```SQL 
+SELECT sales_year
+	,sales
+	,FIRST_VALUE(sales) OVER (ORDER BY sales_year) AS index_sales
+	FROM 
+	(
+		SELECT date_part('year', sales_month) AS sales_year
+			,SUM(sales) as sales
+		FROM retail_sales
+		WHERE kind_of_business = 'Women''s clothing stores'
+		GROUP BY 1
+	)a
+;
+```
+
+Results 
+
+![alt text](image.png)
+
+
+- find the percent change from the base year for each row 
+
+```SQL 
+SELECT sales_year
+	,sales
+	,(sales/FIRST_VALUE(sales) OVER (ORDER BY sales_year) - 1)*100 AS pctg_from_index
+	FROM 
+	(
+		SELECT date_part('year', sales_month) AS sales_year
+			,SUM(sales) AS sales
+			FROM retail_sales
+		WHERE kind_of_business = 'Women''s clothing stores'
+		GROUP BY 1
+	)a
+;
+```
+
+
+Results
+
+![alt text](image-1.png)
+
+
+
+**Rolling Time Windows**
