@@ -347,4 +347,70 @@ Results
 
 
 
-**Rolling Time Windows**
+**Calculating Rolling Time Windows**
+```SQL 
+SELECT a.sales_month
+	,a.sales
+	,b.sales_month AS rolling_sales_month
+	,b.sales as rolling_sales
+FROM retail_sales a
+JOIN retail_sales b on a.kind_of_business = b.kind_of_business
+	AND b.sales_month BETWEEN a.sales_month - interval '11 months'
+	AND a.sales_month
+	AND b.kind_of_business = 'Women''s clothing stores'
+WHERE a.kind_of_business = 'Women''s clothing stores'
+AND a.sales_month = '2019-12-01'
+;
+```
+
+Results 
+
+![alt text](image-2.png)
+
+
+- the next step is to apply the aggregation, in this case using average 
+
+```SQL
+SELECT a.sales_month
+	,a.sales
+	,AVG(b.sales) AS moving_avg
+	,COUNT(b.sales) AS records_count
+FROM retail_sales a 
+JOIN retail_sales b ON a.kind_of_business = b.kind_of_business 
+	AND b.sales_month BETWEEN a.sales_month - interval '11 months'
+	AND a.sales_month
+	AND b.kind_of_business = 'Women''s clothing stores' 
+WHERE a.kind_of_business = 'Women''s clothing stores'
+AND a.sales_month >= '1993-01-01'
+GROUP BY 1,2
+;
+```
+
+Results
+
+
+![alt text](image-3.png)
+
+
+- using a window function to calculate rolling time window 
+
+```SQL 
+SELECT sales_month
+	,AVG(sales) OVER (ORDER BY sales_month
+					  rows between 11 preceding and current row 
+					 ) AS moving_avg
+	,COUNT(sales) OVER (ORDER BY sales_month
+					   rows between 11 preceding and current row 
+					   ) AS records_count
+FROM retail_sales 
+WHERE kind_of_business = 'Women''s clothing stores'
+;
+```
+
+
+Results 
+
+![alt text](image-4.png)
+
+
+
